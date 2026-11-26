@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction Sharing Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm, playful classroom helper for a 12-year-old; clear and calm, never cluttered.
+   IDEA: a pizza shop counter where a division sum gets cut and served.
+   PICTURE: the live pizza and bar model, side by side, animating each step.
+   COLOUR and TYPE: tomato red band, cheese yellow, block blue; Fredoka for numbers/titles, Nunito body.
+   LAYOUT: sum builder on top, the two pictures, then steps + working; stacks on phones. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#1b1411);--ink:light-dark(#2a1a12,#f6ece4);--soft:light-dark(#6d5a4e,#c9b6a8);--card:light-dark(#fff8f0,#271d18);--line:light-dark(#efdccd,#45362d);--ghost:light-dark(#f2e6dc,#3b2f29);--plate:light-dark(#ffffff,#f1ebe4);--hi:light-dark(#fff0c9,#3d3016);--red:#e2432a;--block:#3f74e8}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3.4vw,44px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+header{background:var(--red);color:#fff}
+header h1{font:600 clamp(32px,4.6vw,48px)/1.05 Fredoka,sans-serif;margin:0 0 6px;text-wrap:balance}
+header p{margin:0;font-size:17px;max-width:62ch;opacity:.95}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tabs button{font:600 17px Fredoka,sans-serif;min-height:44px;padding:0 18px;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff;cursor:pointer}
+.tabs button[aria-pressed=true]{background:#fff;color:var(--red)}
+button:focus-visible,input:focus-visible{outline:3px solid #ffc93c;outline-offset:2px}
+.sub{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.sub button{font:600 16px Fredoka,sans-serif;min-height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.sub button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.builder{display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 22px}
+.sum{display:flex;align-items:center;gap:14px;font:600 34px Fredoka,sans-serif}
+.fin{display:inline-flex;flex-direction:column;align-items:center;gap:5px}
+.fin i{display:block;width:66px;height:3px;background:var(--ink);border-radius:2px}
+input{width:66px;height:50px;font:600 24px Fredoka,sans-serif;text-align:center;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);-moz-appearance:textfield}
+input::-webkit-inner-spin-button{-webkit-appearance:none}
+.lbl{font:700 13px Nunito,sans-serif;color:var(--soft);display:block;text-align:center;margin-bottom:4px}
+.guess .fin i{width:52px}.guess input{width:52px;height:42px;font-size:19px}
+.guess{display:flex;align-items:center;gap:10px}
+.guess small{color:var(--soft);font-size:13px;max-width:12ch;line-height:1.3}
+.go{background:var(--red);color:#fff;font:600 19px Fredoka,sans-serif;border:0;border-radius:14px;padding:0 26px;height:54px;cursor:pointer;box-shadow:0 4px 0 #a92c18}
+.go:active{transform:translateY(2px);box-shadow:0 2px 0 #a92c18}
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.presets span{color:var(--soft);font-size:14px;font-weight:700}
+.chip{font:600 16px Fredoka,sans-serif;min-height:44px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+#err{color:var(--red);font-weight:800;width:100%;margin:0}#err:empty{display:none}
+.q{font:600 clamp(20px,2.4vw,26px)/1.3 Fredoka,sans-serif;margin:22px 0 12px}
+.player{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.player button{font:600 16px Fredoka,sans-serif;min-height:44px;min-width:44px;padding:0 16px;border-radius:12px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+.player button:disabled{opacity:.35;cursor:default}
+.player #play{background:var(--ink);color:var(--bg)}
+#prog{color:var(--soft);font-weight:700;margin-left:6px}
+.views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px 16px 10px}
+figure h2{font:600 20px Fredoka,sans-serif;margin:0 0 4px}
+svg{width:100%;height:auto;display:block}
+.t{font:800 14px Nunito,sans-serif;fill:var(--ink)}
+.explain{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;margin-top:18px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
+.box h2{font:600 20px Fredoka,sans-serif;margin:0 0 8px}
+ol{margin:0;padding-left:1.4em}
+ol li{margin:2px 0}
+ol li button{all:unset;display:block;cursor:pointer;padding:9px 12px;border-radius:12px;opacity:.45;font-size:17px;line-height:1.5}
+ol li.done button{opacity:.8}
+ol li.on button{opacity:1;background:var(--hi)}
+ol li button:focus-visible{outline:3px solid var(--block)}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .12em;font-weight:800;font-family:Fredoka,sans-serif}
+.fr span:first-child{border-bottom:2px solid currentColor;padding:0 .22em 1px}
+.fr span:last-child{padding-top:1px}
+.wn{font-weight:800;font-family:Fredoka,sans-serif}
+#eq{font:600 24px Fredoka,sans-serif;line-height:2.3}
+#eq [data-m]{opacity:0;transition:opacity .7s}#eq [data-m].show{opacity:1}
+#eq .short{display:block;font-size:19px;color:var(--soft)}
+#ans{margin-top:10px;padding:14px 16px;border-radius:14px;background:var(--hi);font-size:17px;line-height:1.5;display:none}
+#ans.show{display:block}
+#ans b.big{font:600 28px Fredoka,sans-serif;display:block}
+#fb{font-weight:800}
+.pc{transition:transform 1.15s cubic-bezier(.5,0,.2,1),opacity .7s;transform-box:view-box}
+.sl,.bp{transition:fill .6s,stroke-opacity .8s,opacity .7s}
+.fade{transition:opacity .6s}
+footer{color:var(--soft);font-size:14px}
+@media(max-width:900px){.views,.explain{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.sum{font-size:28px;gap:10px}.builder{padding:14px}.go{width:100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band">
+ <div class="wrap">
+  <h1>Fraction Sharing Lab</h1>
+  <p>Type your own sum, press <b>Show me</b>, and watch the pizza and the bar model work it out step by step.</p>
+  <div class="tabs" role="group" aria-label="Topic">
+   <button id="tdiv" aria-pressed="true">Dividing fractions</button>
+   <button id="tmul" aria-pressed="false">Multiplying fractions</button>
+  </div>
+ </div>
+</header>
+
+<main class="band">
+ <div class="wrap">
+  <form class="builder" id="form" novalidate>
+   <div class="sub" id="sub" role="group" aria-label="Kind of sum"></div>
+   <div class="sum">
+    <div><span class="lbl" id="alb">Pizza you have</span>
+     <div class="fin"><input id="an" type="number" inputmode="numeric" min="1" aria-label="Numerator of the first number"><i></i><input id="ad" type="number" inputmode="numeric" min="1" aria-label="Denominator of the first number"></div></div>
+    <span aria-hidden="true" id="op">÷</span>
+    <div><span class="lbl" id="blbl">Children</span>
+     <div class="fin"><input id="bn" type="number" inputmode="numeric" min="1" aria-label="Divisor numerator"><span id="bdw" class="fin" style="display:none"><i></i><input id="bd" type="number" inputmode="numeric" min="1" aria-label="Divisor denominator"></span></div></div>
+   </div>
+   <div class="guess">
+    <div><span class="lbl">Your guess</span>
+     <div class="fin"><input id="gn" type="number" inputmode="numeric" aria-label="Your guess numerator"><i></i><input id="gd" type="number" inputmode="numeric" aria-label="Your guess denominator"></div></div>
+    <small>Optional. Leave the bottom empty for a whole number.</small>
+   </div>
+   <button class="go" type="submit">Show me</button>
+   <div class="presets" id="presets"></div>
+   <p id="err" role="alert"></p>
+  </form>
+
+  <p class="q" id="q"></p>
+  <div class="player">
+   <button id="back" aria-label="Previous step">Back</button>
+   <button id="play">Pause</button>
+   <button id="next" aria-label="Next step">Next</button>
+   <button id="again">Replay</button>
+   <span id="prog"></span>
+  </div>
+
+  <div class="views">
+   <figure><h2>Pizza</h2><svg id="pz" role="img" aria-label="Pizza model"></svg></figure>
+   <figure><h2>Bar model</h2><svg id="br" role="img" aria-label="Bar model"></svg></figure>
+  </div>
+
+  <div class="explain">
+   <div class="box"><h2>What is happening</h2><ol id="steps"></ol></div>
+   <div class="box"><h2>The working</h2><div id="eq"></div><div id="ans"></div></div>
+  </div>
+ </div>
+</main>
+<footer class="band"><div class="wrap">Tip: tap any step to jump to it. Denominators up to 12. Dividing: up to 3 whole pizzas. Multiplying by a whole number: up to 12 pizzas.</div></footer>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const PAL=['#e2432a','#2f6fde','#16a34a','#9b4dca','#f08c00','#0e9aa7','#d6336c','#5c6ac4'];
+const TINT=['#ffb3a3','#b3cbff','#a8e6bc','#dcbdf0','#ffd59e','#a6e3e8','#f7b5cc','#c3c8f2'];
+const CH='#ffc93c',CR='#d98b3a',PEP='#c8341f',CUT='#8a4b1d';
+const gcd=(x,y)=>y?gcd(y,x%y):x,lcm=(x,y)=>x/gcd(x,y)*y;
+const S=(n,d)=>{const g=gcd(n,d);return[n/g,d/g]};
+const F=(n,d)=>d==1?`<span class=wn>${n}</span>`:`<span class=fr><span>${n}</span><span>${d}</span></span>`;
+const M=(n,d)=>{[n,d]=S(n,d);return d==1?F(n,1):n>d?`<span class=wn>${Math.floor(n/d)}</span>${F(n%d,d)}`:F(n,d)};
+const T=(n,d)=>{[n,d]=S(n,d);return d==1?`${n}`:`${n}/${d}`};
+const Tm=(n,d)=>{[n,d]=S(n,d);return d==1?`${n}`:n>d?`${Math.floor(n/d)} ${n%d}/${d}`:`${n}/${d}`};
+const PRE={w:[[1,2,3],[3,4,2],[2,3,4],[2,1,3],[5,6,2]],f:[[3,4,1,8],[2,3,1,6],[3,4,1,2],[2,1,2,3],[1,2,3,4]],
+ mw:[[1,4,10],[3,4,8],[2,3,6],[1,2,5],[3,5,4]],mf:[[1,2,3,4],[2,3,3,4],[1,3,1,2],[3,4,2,5]]};
+const SUBS={d:[['w','÷ whole number'],['f','÷ fraction']],m:[['mw','× whole number (like 1/4 of 10)'],['mf','× fraction']]};
+const LBL={w:['Pizza you have','Children','÷'],f:['Pizza you have','Each share','÷'],mw:['Fraction','Whole number','×'],mf:['Fraction','Fraction','×']};
+const isM=()=>mode=='mw'||mode=='mf',twoD=m=>m=='f'||m=='mf';
+const W=660,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let mode='w',X=null,stage=0,prev=0,timer=null,playing=false;
+
+const pt=(cx,cy,r,a)=>{a=a*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+const ps=p=>p[0].toFixed(2)+' '+p[1].toFixed(2);
+function sec(cx,cy,r,a0,a1){if(a1-a0>359)return`M${cx-r} ${cy}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;return`M${cx} ${cy}L${ps(pt(cx,cy,r,a0))}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${ps(pt(cx,cy,r,a1))}Z`}
+function arc(cx,cy,r,a0,a1){if(a1-a0>359)a1=a0+359.8;return`M${ps(pt(cx,cy,r,a0))}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${ps(pt(cx,cy,r,a1))}`}
+
+/* one pizza: returns ghost layer, front layer (shaded pieces) and cut-line layer */
+function pizza(cx,cy,R,L,shaded,base,role,off){
+ const A=360/L,o={g:'',f:'',l:''};
+ for(let j=0;j<L;j++){const a0=j*A-90,a1=a0+A,on=j<shaded;
+  let s=`<g class=pc data-r=${role} data-i=${off+j} style="transform-origin:${cx}px ${cy}px"><path class=sl d="${sec(cx,cy,R,a0,a1)}" stroke="${CUT}" stroke-width="1.6" stroke-linejoin="round" style="fill:${on?CH:'var(--ghost)'};stroke-opacity:0"/>`;
+  if(on){s+=`<path d="${arc(cx,cy,R-4,a0,a1)}" fill="none" stroke="${CR}" stroke-width="8"/>`;
+   if(A>=24){const p=pt(cx,cy,R*.6,a0+A/2),r=Math.min(10,R*.6*Math.sin(A*Math.PI/360)*.5);s+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r.toFixed(1)}" fill="${PEP}"/>`}}
+  s+='</g>';on?o.f+=s:o.g+=s}
+ o.l=`<g class="bl fade">`;
+ if(base>1)for(let j=0;j<base;j++){const p=pt(cx,cy,R,j*360/base-90);o.l+=`<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="${CUT}" stroke-width="2.6" stroke-linecap="round"/>`}
+ o.l+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--ink)" stroke-opacity=".45" stroke-dasharray="5 5"/></g>`;
+ return o}
+
+function read(id){const v=$(id).value.trim();return v===''?null:Number(v)}
+function problem(){
+ const a=read('an'),b=read('ad')??1,c=read('bn'),d=twoD(mode)?read('bd'):1;
+ const int=v=>v!==null&&Number.isInteger(v)&&v>0;
+ if(isM()){
+  if(!int(a)||!int(b)||b<2||b>12||a>b)return'Type a fraction for the first number, like 1 over 4 (bottom from 2 to 12, top not bigger than the bottom).';
+  if(mode=='mw'){if(!int(c)||c>12)return'Type a whole number from 1 to 12.';return{m:'mw',a,b,n:c,L:b,U:c,P:c*b,g:c,G:b,base:1}}
+  if(!int(c)||!int(d)||d<2||d>12||c>=d)return'Type a proper fraction for the second number, like 3 over 4.';
+  const L=b*d;if(L>36)return`That would cut the pizza into ${L} slices, too thin to see. Try smaller denominators.`;
+  return{m:'mf',a,b,c,d,L,U:1,P:c*b,g:c,G:b,base:d}}
+ if(!int(a)||!int(b))return'Type a whole number or a fraction for the pizza you have (for example 1 over 2, or just 2).';
+ if(b>12)return'Keep the denominator of the pizza at 12 or less.';
+ if(a>3*b)return'That is more than 3 whole pizzas. Try a smaller amount.';
+ if(mode=='w'){
+  if(!int(c)||c<2||c>8)return'Type a whole number of children from 2 to 8.';
+  const L=b*c;if(L>24)return`Cutting into ${L} pieces makes them too tiny to see. Try smaller numbers.`;
+  return{m:'w',a,b,n:c,L,P:a*c,g:a,G:c,U:Math.ceil(a/b),r:0}}
+ if(!int(c)||!int(d))return'Type a fraction for each share, like 1 over 4.';
+ if(d<2||d>12||c>=d)return'Each share should be a proper fraction (top smaller than bottom) with a denominator up to 12.';
+ const L=lcm(b,d);if(L>24)return`The common pieces would be 1/${L} of a pizza, too tiny to see. Try other denominators.`;
+ const P=a*L/b,g=c*L/d,G=Math.ceil(P/g);if(G>24)return'That makes more than 24 shares. Try a bigger share size.';
+ return{m:'f',a,b,c,d,L,P,g,G,U:Math.ceil(P/L),r:P%g,full:Math.floor(P/g)}}
+
+function renderMul(){
+ const x=X,{L,U,P,g,G,base,a,b}=x,A=360/L,cols=U<=6?U:Math.ceil(U/2),rows=Math.ceil(U/cols),R=Math.min(U==3?90:100,W/cols/2-10),rh=2*R+22;
+ const cxf=u=>{const r=Math.floor(u/cols),inRow=r==rows-1&&U%cols?U%cols:cols;return W/cols*(u%cols+.5)+(cols-inRow)*W/cols/2},cyf=u=>R+14+Math.floor(u/cols)*rh;
+ let back='',front='',lines='',over='';
+ for(let u=0;u<U;u++){const o=pizza(cxf(u),cyf(u),R,L,Math.max(0,Math.min(L,P-u*L)),base,'d',u*L);back+=o.g;front+=o.f;lines+=o.l}
+ for(let q=0;q<G;q++){const st=q*g,en=st+g,mid=(st+en)/2,u=Math.min(U-1,Math.floor(mid/L)),p=pt(cxf(u),cyf(u),R*.62,(mid-u*L)*A-90);
+  const br=Math.max(8,Math.min(14,R*.62*Math.sin(Math.min(Math.min(g,L)*A,180)*Math.PI/360)*.85));
+  over+=`<g class="fade bd" data-q="${q}" style="opacity:0"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${br.toFixed(1)}" fill="${PAL[q%8]}" stroke="#fff" stroke-width="2"/><text x="${p[0].toFixed(1)}" y="${(p[1]+4).toFixed(1)}" text-anchor="middle" fill="#fff" style="font:800 ${br>11?13:10}px Nunito,sans-serif">${q+1}</text></g>`}
+ const pz=$('pz');pz.setAttribute('viewBox',`0 0 ${W} ${rows*rh+12}`);pz.innerHTML=back+front+lines+over;
+ const x0=40,BW=580,y=58,bh=56,TT=U*L,pw=BW/TT,xa=x0+a*g*pw,y2=y+bh+54,lx=Math.max(x0+70,(x0+xa)/2);
+ let s=`<path d="M${x0} 44v-8H${x0+BW}v8" fill="none" stroke="var(--ink)" stroke-width="2"/><text class=t x="${x0+BW/2}" y="28" text-anchor="middle">${x.m=='mw'?`${U} whole pizza${U>1?'s':''}`:'1 whole pizza'}</text>`;
+ for(let j=0;j<TT;j++)s+=`<rect class=bp data-i=${j} x="${x0+j*pw}" y="${y}" width="${pw}" height="${bh}" stroke="var(--ink)" stroke-width="1" style="fill:${j<P?'var(--block)':'var(--ghost)'};stroke-opacity:0"/>`;
+ for(let j=b;j<TT;j+=b)s+=`<line x1="${x0+j*pw}" y1="${y}" x2="${x0+j*pw}" y2="${y+bh}" stroke="var(--ink)" stroke-width="2.5"/>`;
+ s+=`<rect x="${x0}" y="${y}" width="${BW}" height="${bh}" fill="none" stroke="var(--ink)" stroke-width="2.5" rx="2"/>`;
+ for(let q=0;q<G;q++){const x1=x0+q*g*pw,x2=x1+g*pw;
+  s+=`<g class="fade bk" data-q="${q}" style="opacity:0"><path d="M${x1+3} ${y+bh+6}v9H${x2-3}v-9" fill="none" stroke="${PAL[q%8]}" stroke-width="3" stroke-linecap="round"/><text class=t x="${(x1+x2)/2}" y="${y+bh+34}" text-anchor="middle" style="fill:${PAL[q%8]}">${q+1}</text></g>`}
+ const val=x.m=='mw'?`${Tm(a*x.n,b)} pizza${a*x.n<b?'':a*x.n==b?'':'s'}`:`${Tm(a*x.c,L)} of a pizza`;
+ s+=`<g class="fade ab" style="opacity:0"><path d="M${x0+2} ${y2}v10H${xa-2}v-10" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/><text class="t fade aq" x="${lx}" y="${y2+32}" text-anchor="middle" style="font-size:18px">${a}/${b} of it = ?</text><text class="t fade av" x="${lx}" y="${y2+32}" text-anchor="middle" style="font-size:18px;opacity:0">${val}</text></g>`;
+ const br=$('br');br.setAttribute('viewBox',`0 0 ${W} ${y2+46}`);br.innerHTML=s;
+ wordsMul()}
+
+function wordsMul(){
+ const x=X,{a,b,L}=x,pl=k=>k==1?'':'s';let q,st,eq,ans;
+ if(x.m=='mw'){const n=x.n,res=M(a*n,b),simp=S(a*n,b)[1]!=b||a*n>b,unit=k=>k<b?' of a pizza':k==b?' pizza':' pizzas';
+  q=`There ${n==1?'is 1 pizza':`are ${n} pizzas`}. What is ${F(a,b)} of ${n}? That is ${F(a,b)} × ${n}.`;
+  st=[`Here ${n==1?'is 1 whole pizza':`are ${n} whole pizzas`}. The bar shows all ${n} pizza${pl(n)} end to end.`,
+   `To find ${F(a,b)} of ${n}, we need ${b} equal groups. Cut each pizza into ${b} slices of ${F(1,b)} so the groups come out fair.`,
+   `Deal the ${n*b} slices into ${b} equal groups. Each group gets ${n} slice${pl(n)}: ${n} ÷ ${b} = ${M(n,b)}${unit(n)}.`,
+   `${F(a,b)} means take ${a} of the ${b} groups. That is ${a*n} slice${pl(a*n)} of ${F(1,b)}.`,
+   `${a*n} × ${F(1,b)} = ${F(a*n,b)}${simp?` = ${res}`:''}. So ${F(a,b)} of ${n} is ${res}${unit(a*n)}.`];
+  eq=`<span data-m=0>${F(a,b)} × ${n}</span><span data-m=3> = ${F(`${a} × ${n}`,b)}</span><span data-m=4> = ${F(a*n,b)}</span>${simp?`<span data-m=4> = ${res}</span>`:''}<span data-m=4 class=short>Shortcut: multiply the top by ${n}, keep the bottom.</span>`;
+  ans=[a*n,b,`<b class=big>${F(a,b)} of ${n} = ${res}</b>`]}
+ else{const {c,d}=x,res=M(a*c,L),simp=S(a*c,L)[1]!=L;
+  q=`What is ${F(a,b)} of ${F(c,d)} of a pizza? That is ${F(a,b)} × ${F(c,d)}.`;
+  st=[`Here is ${F(c,d)} of a pizza.`,
+   `To take ${F(a,b)} of it, cut every ${F(1,d)} slice into ${b} equal pieces. Now the whole pizza has ${L} pieces, each ${F(1,L)} of a pizza.`,
+   `Split the ${c*b} shaded pieces into ${b} equal groups. Each group has ${c} piece${pl(c)}.`,
+   `${F(a,b)} means take ${a} of the ${b} groups. That is ${a*c} piece${pl(a*c)}.`,
+   `${a*c} piece${pl(a*c)} of ${F(1,L)} = ${F(a*c,L)}${simp?` = ${res}`:''} of a pizza. So ${F(a,b)} × ${F(c,d)} = ${res}.`];
+  eq=`<span data-m=0>${F(a,b)} × ${F(c,d)}</span><span data-m=3> = ${F(`${a} × ${c}`,`${b} × ${d}`)}</span><span data-m=4> = ${F(a*c,L)}</span>${simp?`<span data-m=4> = ${res}</span>`:''}<span data-m=4 class=short>Shortcut: multiply the tops, multiply the bottoms.</span>`;
+  ans=[a*c,L,`<b class=big>${F(a,b)} × ${F(c,d)} = ${res}</b>That is ${res} of a pizza.`]}
+ $('q').innerHTML=q;$('eq').innerHTML=eq;X.ans=ans;X.N=st.length;
+ $('steps').innerHTML=st.map((t,i)=>`<li><button data-s="${i}">${t}</button></li>`).join('')}
+
+function applyMul(){
+ const x=X,s=stage,fw=s>prev&&!reduce,dl=v=>fw?v+'s':'0s',off=q=>s>=3&&q>=x.a;
+ document.querySelectorAll('#pz .pc').forEach(e=>{const i=+e.dataset.i,dv=i<x.P,q=Math.floor(i/x.g),sl=e.firstChild;
+  sl.style.strokeOpacity=s>=1?1:0;e.style.transitionDelay='0s';e.style.opacity=dv&&off(q)?.18:1;
+  if(dv){sl.style.transitionDelay=s==2?dl(q*.35):'0s';sl.style.fill=s>=2?TINT[q%8]:CH}});
+ document.querySelectorAll('#pz .bd').forEach(e=>{const q=+e.dataset.q;e.style.transitionDelay=s==2?dl(q*.35+.3):'0s';e.style.opacity=s<2?0:off(q)?.2:1});
+ document.querySelectorAll('#br .bp').forEach(e=>{const i=+e.dataset.i,dv=i<x.P,q=Math.floor(i/x.g);
+  e.style.strokeOpacity=s>=1?.7:0;if(dv){e.style.transitionDelay=s==2?dl(q*.35):'0s';e.style.fill=s>=2?PAL[q%8]:'var(--block)';e.style.opacity=off(q)?.2:1}});
+ document.querySelectorAll('#br .bk').forEach(e=>{const q=+e.dataset.q;e.style.transitionDelay=s==2?dl(q*.35+.3):'0s';e.style.opacity=s<2?0:off(q)?.25:1});
+ document.querySelectorAll('#br .ab').forEach(e=>e.style.opacity=s>=3?1:0);
+ document.querySelectorAll('#br .aq').forEach(e=>e.style.opacity=s==3?1:0);
+ document.querySelectorAll('#br .av').forEach(e=>e.style.opacity=s>=4?1:0)}
+
+function render(){
+ if(X.m=='mw'||X.m=='mf')return renderMul();
+ const x=X,{a,b,L,P,g,G,U}=x,A=360/L,R=U==3?90:100;
+ const ux=u=>W/U*(u+.5),cy=R+16;
+ let back='',front='',lines='',over='',H;
+ for(let u=0;u<U;u++){const o=pizza(ux(u),cy,R,L,Math.max(0,Math.min(L,P-u*L)),b,'d',u*L);back+=o.g;front+=o.f;lines+=o.l}
+ const tf=[];
+ if(x.m=='w'){const n=x.n,pr=Math.min(R*.72,W/n/2-10),top=2*R+52,pcy=top+pr,s=pr*.86/R,px=q=>W/n*(q+.5);
+  for(let q=0;q<n;q++)back+=`<circle cx="${px(q)}" cy="${pcy}" r="${pr}" fill="var(--plate)" stroke="${PAL[q]}" stroke-width="4"/><text class=t x="${px(q)}" y="${pcy+pr+22}" text-anchor="middle" style="fill:${PAL[q]}">${pr<36?'C':'Child '}${q+1}</text><text class="t fade sh" x="${px(q)}" y="${pcy+pr+42}" text-anchor="middle" style="opacity:0">${a}/${L}</text>`;
+  for(let i=0;i<P;i++){const u=Math.floor(i/L),pos=i%L,q=Math.floor(i/g),k=i%g,layer=Math.floor(k/L);
+   tf[i]=[`translate(${(px(q)+layer*pr*.45-ux(u)).toFixed(1)}px,${(pcy-cy).toFixed(1)}px) rotate(${((k%L-pos)*A).toFixed(2)}deg) scale(${s.toFixed(3)})`,q*.55]}
+  H=pcy+pr+52}
+ else{const sy=3*R+64;
+  const o=pizza(W/2+60,sy,R,L,x.g,x.d,'s',0);
+  over+=`<g class="fade sv" style="opacity:0">${o.g}${o.f}${o.l}<text class=t x="${W/2+60-R-18}" y="${sy-6}" text-anchor="end">One share</text><text class=t x="${W/2+60-R-18}" y="${sy+16}" text-anchor="end">= ${x.c}/${x.d} pizza</text></g>`;
+  for(let q=0;q<G;q++){const st=q*g,en=Math.min(P,st+g),mid=(st+en)/2,u=Math.min(U-1,Math.floor(mid/L)),p=pt(ux(u),cy,R*.68,(mid-u*L)*A-90);
+   const br=Math.max(8,Math.min(14,R*.68*Math.sin(Math.min((en-st)*A,180)*Math.PI/360)*.85)),part=en-st<g;
+   over+=`<g class="fade bd" style="opacity:0"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${br.toFixed(1)}" fill="${PAL[q%8]}" stroke="#fff" stroke-width="2"/><text x="${p[0].toFixed(1)}" y="${(p[1]+4).toFixed(1)}" text-anchor="middle" fill="#fff" style="font:800 ${part?10:br>11?13:10}px Nunito,sans-serif">${part?T(en-st,g):q+1}</text></g>`}
+  H=sy+R+16}
+ const pz=$('pz');pz.setAttribute('viewBox',`0 0 ${W} ${H}`);pz.innerHTML=back+front+lines+over;
+ x.tf=tf;
+
+ /* bar model */
+ const x0=40,BW=580,bh=48,gap=60,top=40,pw=BW/L,by=u=>top+u*(bh+gap);
+ let s=`<path d="M${x0} 30v-8H${x0+BW}v8" fill="none" stroke="var(--ink)" stroke-width="2"/><text class=t x="${x0+BW/2}" y="16" text-anchor="middle">1 whole pizza</text>`;
+ const bar=(y,shaded,base,role,off)=>{let t='';for(let j=0;j<L;j++)t+=`<rect class=bp data-r=${role} data-i=${off+j} x="${x0+j*pw}" y="${y}" width="${pw}" height="${bh}" stroke="var(--ink)" stroke-width="1" style="fill:${j<shaded?'var(--block)':'var(--ghost)'};stroke-opacity:0"/>`;
+  for(let j=1;j<base;j++)t+=`<line x1="${x0+BW*j/base}" y1="${y}" x2="${x0+BW*j/base}" y2="${y+bh}" stroke="var(--ink)" stroke-width="2.5"/>`;
+  return t+`<rect x="${x0}" y="${y}" width="${BW}" height="${bh}" fill="none" stroke="var(--ink)" stroke-width="2.5" rx="2"/>`};
+ for(let u=0;u<U;u++)s+=bar(by(u),Math.max(0,Math.min(L,P-u*L)),b,'d',u*L);
+ for(let q=0;q<G;q++){const st=q*g,en=Math.min(P,st+g);let first=true;
+  for(let u=Math.floor(st/L);u<=Math.floor((en-1)/L);u++){const s0=Math.max(st,u*L)-u*L,e0=Math.min(en,(u+1)*L)-u*L,x1=x0+s0*pw,x2=x0+e0*pw,y=by(u)+bh;
+   const lab=!first?'':x.m=='w'?(x2-x1>=74?`Child ${q+1}`:`${q+1}`):(en-st<g?T(en-st,g):`${q+1}`);
+   s+=`<g class="fade bk" data-q="${q}" style="opacity:0"><path d="M${x1+3} ${y+6}v9H${x2-3}v-9" fill="none" stroke="${PAL[q%8]}" stroke-width="3" stroke-linecap="round"/>${lab?`<text class=t x="${(x1+x2)/2}" y="${y+34}" text-anchor="middle" style="fill:${PAL[q%8]}">${lab}</text>`:''}</g>`;first=false}}
+ let BH=by(U)-gap+bh+50;
+ if(x.m=='f'){const y=by(U)+10;s+=`<g class="fade sv" style="opacity:0"><text class=t x="${x0}" y="${y-10}">One share = ${x.c}/${x.d} of a pizza</text>${bar(y,x.g,x.d,'s',0)}</g>`;BH=y+bh+16}
+ const br=$('br');br.setAttribute('viewBox',`0 0 ${W} ${BH}`);br.innerHTML=s;
+ words()}
+
+function words(){
+ const x=X,{a,b,L,P,g}=x,D=b==1?`${a} whole pizza${a>1?'s':''}`:`${F(a,b)} of a pizza`;
+ let st,eq,q,ans;
+ if(x.m=='w'){const n=x.n,simp=S(a,L)[1]!=L;
+  q=`${n} children share ${D} equally. How much pizza does each child get?`;
+  st=[`Here is ${D}. In the bar model, one whole bar is one whole pizza, and the shaded part is ${b==1?a+' whole':F(a,b)}.`,
+   `There are ${n} children, so ${b==1?`cut each pizza into ${n} equal pieces`:`cut every ${F(1,b)} slice into ${n} equal pieces`}. Now one whole pizza has ${L} pieces, so each piece is ${F(1,L)} of a pizza.`,
+   `Hand out the ${P} pieces fairly: ${P} ÷ ${n} = ${a}, so each child gets ${a} piece${a>1?'s':''}.`,
+   `Each child gets ${a} × ${F(1,L)} = ${F(a,L)} of a pizza${simp?`, which is ${M(a,L)} in simplest form`:''}.`];
+  eq=`<span data-m=0>${F(a,b)} ÷ ${n}</span><span data-m=1> = ${F(a,b)} × ${F(1,n)}</span><span data-m=3> = ${F(a,L)}</span>${simp?`<span data-m=3> = ${M(a,L)}</span>`:''}<span data-m=3 class=short>Dividing by ${n} is the same as multiplying by ${F(1,n)}.</span>`;
+  ans=[a,L,`<b class=big>Each child gets ${M(a,L)} of a pizza.</b>`]}
+ else{const {c,d,r,full}=x,same=L==b&&L==d,ps=k=>`${k} piece${k>1?'s':''}`;
+  q=`There is ${D}. Each child gets ${F(c,d)} of a pizza. How many children can get a share?`;
+  st=[`Here is ${D}.`,
+   `One share is ${F(c,d)} of a pizza (shown underneath). How many ${F(c,d)} shares fit into ${b==1?a:F(a,b)}?`,
+   same?`Both fractions already use pieces of ${F(1,L)}. We have ${ps(P)}, and one share is ${ps(g)}.`:`Cut everything into pieces of the same size: ${F(1,L)} of a pizza. Now ${b==1?a:F(a,b)} = ${F(P,L)} and ${F(c,d)} = ${F(g,L)}, so one share is ${ps(g)}.`,
+   full==0?`We only have ${ps(P)}, not enough for one full share of ${g}. That is ${M(P,g)} of a share.`:`Make groups of ${ps(g)}: ${P} ÷ ${g} gives ${full} full share${full>1?'s':''}${r?`, with ${ps(r)} left over. That is ${M(r,g)} of another share`:''}.`,
+   `So ${b==1?a:F(a,b)} ÷ ${F(c,d)} = ${M(P,g)}. Shortcut: flip the second fraction and multiply.`];
+  eq=`<span data-m=0>${b==1?F(a,1):F(a,b)} ÷ ${F(c,d)}</span>${same?'':`<span data-m=2> = ${F(P,L)} ÷ ${F(g,L)}</span>`}<span data-m=3> = ${P} ÷ ${g}</span><span data-m=4> = ${M(P,g)}</span><span data-m=4 class=short>Shortcut: ${b==1?F(a,1):F(a,b)} × ${F(d,c)} = ${F(a*d,b*c)}${S(a*d,b*c).join()!=[a*d,b*c].join()||a*d>b*c?` = ${M(a*d,b*c)}`:''}</span>`;
+  ans=[P,g,`<b class=big>${b==1?a:F(a,b)} ÷ ${F(c,d)} = ${M(P,g)}</b>`+(r==0?`Exactly ${full} child${full>1?'ren':''} can get a ${F(c,d)} share.`:full>0?`${full} child${full>1?'ren':''} get a full share, with ${M(r,g)} of a share left over.`:`There is not enough for one child: only ${M(P,g)} of a share.`)]}
+ $('q').innerHTML=q;$('eq').innerHTML=eq;X.ans=ans;X.N=st.length;
+ $('steps').innerHTML=st.map((t,i)=>`<li><button data-s="${i}">${t}</button></li>`).join('')}
+
+function apply(){
+ const x=X,s=stage,fw=s>prev&&!reduce,recut=x.m=='w'?1:2,grp=x.m=='w'?2:3,dl=v=>fw?v+'s':'0s';
+ if(x.m=='mw'||x.m=='mf')applyMul();else{
+ document.querySelectorAll('#pz .pc').forEach(e=>{const i=+e.dataset.i,dv=e.dataset.r=='d'&&i<x.P,sl=e.firstChild;
+  sl.style.transitionDelay='0s';sl.style.strokeOpacity=s>=recut?1:0;
+  if(x.m=='w'&&dv){const t=x.tf[i];e.style.transitionDelay=dl(t[1]);e.style.transform=s>=grp?t[0]:'none'}
+  if(x.m=='f'&&dv){const q=Math.floor(i/x.g);sl.style.transitionDelay=s>=grp?dl(q*.5):'0s';sl.style.fill=s>=grp?TINT[q%8]:CH}});
+ document.querySelectorAll('#pz .bl').forEach(e=>e.style.opacity=x.m=='w'&&s>=grp?0:1);
+ document.querySelectorAll('#pz .sh').forEach(e=>{e.style.transitionDelay=dl(.4);e.style.opacity=s>=3?1:0});
+ document.querySelectorAll('.sv').forEach(e=>e.style.opacity=s>=1?1:0);
+ document.querySelectorAll('#pz .bd').forEach((e,q)=>{e.style.transitionDelay=s>=grp?dl(q*.5+.3):'0s';e.style.opacity=s>=grp?1:0});
+ document.querySelectorAll('#br .bp').forEach(e=>{const i=+e.dataset.i,dv=e.dataset.r=='d'&&i<x.P,q=Math.floor(i/x.g);
+  e.style.strokeOpacity=s>=recut?.7:0;e.style.transitionDelay=dv&&s>=grp?dl(q*.5):'0s';if(dv)e.style.fill=s>=grp?PAL[q%8]:'var(--block)'});
+ document.querySelectorAll('#br .bk').forEach(e=>{e.style.transitionDelay=s>=grp?dl(e.dataset.q*.5+.3):'0s';e.style.opacity=s>=grp?1:0})}
+ document.querySelectorAll('#steps li').forEach((li,i)=>li.className=i==s?'on':i<s?'done':'');
+ document.querySelectorAll('#eq [data-m]').forEach(e=>e.classList.toggle('show',s>=+e.dataset.m));
+ const last=s==x.N-1,A=$('ans');A.classList.toggle('show',last);
+ if(last){let h=x.ans[2];const gn=read('gn'),gd=read('gd')??1;
+  if(gn!==null)h+=`<br><span id=fb>${gn*x.ans[1]==gd*x.ans[0]?'Your guess was right. Well done!':`Your guess was ${T(gn,gd)}. Not quite. Step back through and watch the pieces again.`}</span>`;
+  A.innerHTML=h}
+ $('back').disabled=s==0;$('next').disabled=last;$('prog').textContent=`Step ${s+1} of ${x.N}`;
+ $('play').textContent=playing?'Pause':'Play'}
+
+function go(s){clearTimeout(timer);prev=stage;stage=Math.max(0,Math.min(X.N-1,s));if(stage==X.N-1)playing=false;apply();
+ if(playing){const mm=X.m=='mw'||X.m=='mf',grp=X.m=='w'||mm?2:3,t=stage==grp?1400+X.G*(mm?350:550)+1800:stage==grp-1&&X.m=='w'?3800:4200;timer=setTimeout(()=>go(stage+1),t)}}
+
+function run(){const p=problem();$('err').textContent=typeof p=='string'?p:'';if(typeof p=='string')return;
+ X=p;stage=0;prev=0;render();playing=true;go(0);
+ try{localStorage.setItem('fsl',JSON.stringify({mode,v:['an','ad','bn','bd'].map(i=>$(i).value)}))}catch(e){}}
+
+function fill(v){$('an').value=v[0];$('ad').value=v[1]==1?'':v[1];$('bn').value=v[2];$('bd').value=v[3]??'';$('gn').value='';$('gd').value=''}
+function setMode(m,keep){mode=m;const grp=isM()?'m':'d';
+ $('tdiv').setAttribute('aria-pressed',grp=='d');$('tmul').setAttribute('aria-pressed',grp=='m');
+ $('sub').innerHTML=SUBS[grp].map(([k,t])=>`<button type=button data-m="${k}" aria-pressed="${k==m}">${t}</button>`).join('');
+ $('bdw').style.display=twoD(m)?'':'none';[$('alb').textContent,$('blbl').textContent,$('op').textContent]=LBL[m];
+ const op=LBL[m][2];
+ $('presets').innerHTML='<span>Try:</span>'+PRE[m].map((v,i)=>`<button type=button class=chip data-p=${i}>${v[1]==1?v[0]:v[0]+'/'+v[1]} ${m=='mw'?'of':op} ${twoD(m)?v[2]+'/'+v[3]:v[2]}</button>`).join('');
+ if(!keep)fill(PRE[m][0]);run()}
+
+$('form').addEventListener('submit',e=>{e.preventDefault();run()});
+$('tdiv').onclick=()=>isM()&&setMode('w');$('tmul').onclick=()=>!isM()&&setMode('mw');
+$('sub').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(b&&b.dataset.m!=mode)setMode(b.dataset.m)});
+$('presets').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b){fill(PRE[mode][+b.dataset.p]);run()}});
+$('back').onclick=()=>{playing=false;go(stage-1)};$('next').onclick=()=>{playing=false;go(stage+1)};
+$('play').onclick=()=>{if(playing){playing=false;clearTimeout(timer);apply()}else{playing=true;go(stage==X.N-1?0:stage+1)}};
+$('again').onclick=()=>{playing=true;prev=0;stage=0;render();go(0)};
+$('steps').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){playing=false;go(+b.dataset.s)}});
+
+let saved=null;try{saved=JSON.parse(localStorage.getItem('fsl'))}catch(e){}
+if(saved&&LBL[saved.mode]){['an','ad','bn','bd'].forEach((i,k)=>$(i).value=saved.v[k]??'');setMode(saved.mode,true);if(!X){fill(PRE[mode][0]);run()}}
+else setMode('w');
+}
+</script>
+</body>
+</html>
